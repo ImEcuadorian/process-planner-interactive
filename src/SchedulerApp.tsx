@@ -1,6 +1,20 @@
 import React, {useState} from 'react';
 
-const platosEcuatorianos = {
+interface Proceso {
+    pid: string;
+    arrival: number;
+    burst: number;
+    priority?: number;
+    start?: number;
+    end?: number;
+    waitingTime?: number;
+    turnaroundTime?: number;
+    remaining?: number;
+}
+
+type Algoritmo = 'FIFO' | 'SJF' | 'PRIORITY' | 'ROUND_ROBIN';
+
+const platosEcuatorianos: Record<string, string> = {
     Encebollado: '/img/img.png',
     Bolon: '/img/img.png',
     Guatita: '/img/img.png',
@@ -8,43 +22,75 @@ const platosEcuatorianos = {
     SecoDePollo: '/img/img.png',
     Hornado: '/img/img.png',
     Ceviche: '/img/img.png',
-    Llapingacho: '/img/img.png'
+    Llapingacho: '/img/img.png',
+    Tigrillo: '/img/img.png',
+    Humitas: '/img/img.png',
+    Tamal: '/img/img.png',
+    EmpanadasDeViento: '/img/img.png',
+    EmpanadasDeVerde: '/img/img.png',
+    LocroDePapa: '/img/img.png',
+    CaldoDeGallina: '/img/img.png',
+    CaldoDePata: '/img/img.png',
+    CuyAsado: '/img/img.png',
+    Churrasco: '/img/img.png',
+    SecoDeChivo: '/img/img.png',
+    SecoDeGallina: '/img/img.png',
+    Yapingacho: '/img/img.png',
+    ChocloConQueso: '/img/img.png',
+    SangoDePlatano: '/img/img.png',
+    SangoDeMaiz: '/img/img.png',
+    CamaronesApanados: '/img/img.png',
+    EncocadoDePescado: '/img/img.png',
+    EncocadoDeCamarón: '/img/img.png',
+    ArrozConMenestraYCarne: '/img/img.png',
+    ArrozMarinero: '/img/img.png',
+    VicheDePescado: '/img/img.png',
+    VicheDeCamarón: '/img/img.png',
+    Patacones: '/img/img.png',
+    MaduroConQueso: '/img/img.png',
+    ChichaDeJora: '/img/img.png',
+    JugosNaturales: '/img/img.png',
+    Canelazo: '/img/img.png',
+    Rosero: '/img/img.png',
+    ColadaMorada: '/img/img.png',
+    GuaguasDePan: '/img/img.png'
 };
 
-const getRandomPlato = () => {
+
+const getRandomPlato = (): string => {
     const keys = Object.keys(platosEcuatorianos);
     return keys[Math.floor(Math.random() * keys.length)];
 };
 
-const SchedulerApp = () => {
-    const [algorithm, setAlgorithm] = useState('FIFO');
-    const [pid, setPid] = useState('Encebollado');
-    const [arrival, setArrival] = useState('');
-    const [burst, setBurst] = useState('');
-    const [priority, setPriority] = useState('');
-    const [quantum, setQuantum] = useState('');
-    const [processes, setProcesses] = useState([]);
-    const [results, setResults] = useState([]);
-    const [current, setCurrent] = useState(null);
-    const [progress, setProgress] = useState(0);
-    const [running, setRunning] = useState(false);
+const SchedulerApp: React.FC = () => {
+    const [algorithm, setAlgorithm] = useState<Algoritmo>('FIFO');
+    const [pid, setPid] = useState<string>('Encebollado');
+    const [arrival, setArrival] = useState<string>('');
+    const [burst, setBurst] = useState<string>('');
+    const [priority, setPriority] = useState<string>('');
+    const [quantum, setQuantum] = useState<string>('');
+    const [processes, setProcesses] = useState<Proceso[]>([]);
+    const [results, setResults] = useState<Proceso[]>([]);
+    const [current, setCurrent] = useState<Proceso | null>(null);
+    const [progress, setProgress] = useState<number>(0);
+    const [running, setRunning] = useState<boolean>(false);
 
-    const addProcess = () => {
+    const addProcess = (): void => {
         if (!pid || !arrival || !burst) return;
-        const newProcess = {
+        const newProcess: Proceso = {
             pid,
             arrival: parseInt(arrival),
             burst: parseInt(burst),
             priority: priority ? parseInt(priority) : undefined
         };
-        setProcesses([...processes, newProcess]);
+        setProcesses(prev => [...prev, newProcess]);
         setPid('Encebollado');
         setArrival('');
         setBurst('');
         setPriority('');
     };
 
-    const resetSimulation = () => {
+    const resetSimulation = (): void => {
         setProcesses([]);
         setResults([]);
         setCurrent(null);
@@ -52,18 +98,18 @@ const SchedulerApp = () => {
         setRunning(false);
     };
 
-    const addRandomProcesses = () => {
-        const randomList = Array.from({length: 5}, (_, i) => ({
+    const addRandomProcesses = (): void => {
+        const randomList: Proceso[] = Array.from({length: 5}, () => ({
             pid: getRandomPlato(),
             arrival: Math.floor(Math.random() * 5),
             burst: Math.floor(Math.random() * 8 + 2),
             priority: algorithm === 'PRIORITY' ? Math.floor(Math.random() * 5 + 1) : undefined
         }));
-        setProcesses([...processes, ...randomList]);
+        setProcesses(prev => [...prev, ...randomList]);
     };
 
-    const runScheduler = () => {
-        let scheduled = [];
+    const runScheduler = (): void => {
+        let scheduled: Proceso[] = [];
         switch (algorithm) {
             case 'FIFO':
                 scheduled = runFIFO(processes);
@@ -82,7 +128,7 @@ const SchedulerApp = () => {
         simulateCooking(scheduled);
     };
 
-    const simulateCooking = async (scheduled) => {
+    const simulateCooking = async (scheduled: Proceso[]): Promise<void> => {
         setRunning(true);
         for (const p of scheduled) {
             setCurrent(p);
@@ -97,7 +143,7 @@ const SchedulerApp = () => {
         setRunning(false);
     };
 
-    const runFIFO = (list) => {
+    const runFIFO = (list: Proceso[]): Proceso[] => {
         const sorted = [...list].sort((a, b) => a.arrival - b.arrival);
         let time = 0;
         return sorted.map(p => {
@@ -111,9 +157,10 @@ const SchedulerApp = () => {
         });
     };
 
-    const runSJF = (list) => {
+    const runSJF = (list: Proceso[]): Proceso[] => {
         const sorted = [...list];
-        let time = 0, completed = [];
+        let time = 0;
+        const completed: Proceso[] = []
         while (sorted.length > 0) {
             const ready = sorted.filter(p => p.arrival <= time);
             if (ready.length === 0) {
@@ -132,16 +179,17 @@ const SchedulerApp = () => {
         return completed;
     };
 
-    const runPriority = (list) => {
+    const runPriority = (list: Proceso[]): Proceso[] => {
         const sorted = [...list];
-        let time = 0, completed = [];
+        let time = 0;
+        const completed: Proceso[] = [];
         while (sorted.length > 0) {
             const ready = sorted.filter(p => p.arrival <= time);
             if (ready.length === 0) {
                 time++;
                 continue;
             }
-            const next = ready.sort((a, b) => a.priority - b.priority)[0];
+            const next = ready.sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))[0];
             sorted.splice(sorted.indexOf(next), 1);
             const start = time;
             const end = start + next.burst;
@@ -153,13 +201,14 @@ const SchedulerApp = () => {
         return completed;
     };
 
-    const runRoundRobin = (list, q) => {
-        const queue = [...list].map(p => ({...p}));
-        let time = 0, results = [];
+    const runRoundRobin = (list: Proceso[], q: number): Proceso[] => {
+        const queue = [...list.map(p => ({...p}))];
+        let time = 0;
+        const results: Proceso[] = [];
         let remaining = queue.map(p => ({...p, remaining: p.burst}));
-        const readyQueue = [];
+        const readyQueue: Proceso[] = [];
         while (remaining.length > 0 || readyQueue.length > 0) {
-            for (let p of remaining.filter(p => p.arrival <= time)) {
+            for (const p of remaining.filter(p => p.arrival <= time)) {
                 if (!readyQueue.includes(p)) readyQueue.push(p);
             }
             remaining = remaining.filter(p => !readyQueue.includes(p));
@@ -167,13 +216,13 @@ const SchedulerApp = () => {
                 time++;
                 continue;
             }
-            const current = readyQueue.shift();
+            const current = readyQueue.shift()!;
             const start = time;
-            const execTime = Math.min(current.remaining, q);
+            const execTime = Math.min(current.remaining!, q);
             time += execTime;
-            current.remaining -= execTime;
-            if (current.remaining > 0) {
-                for (let p of remaining.filter(p => p.arrival <= time && !readyQueue.includes(p))) {
+            current.remaining! -= execTime;
+            if (current.remaining! > 0) {
+                for (const p of remaining.filter(p => p.arrival <= time && !readyQueue.includes(p))) {
                     readyQueue.push(p);
                 }
                 readyQueue.push(current);
@@ -186,14 +235,13 @@ const SchedulerApp = () => {
         }
         return results;
     };
-
     return (
         <div className="p-6 font-mono max-w-full mx-auto">
             <h1 className="text-xl font-bold mb-4">🍽️ Simulador de Cocina con Algoritmos de Planificación</h1>
 
             <div className="flex flex-wrap gap-2 items-center mb-4">
                 <label className="font-semibold">Algoritmo:</label>
-                <select className="border px-2 py-1" value={algorithm} onChange={e => setAlgorithm(e.target.value)}>
+                <select className="border px-2 py-1" value={algorithm} onChange={e => setAlgorithm(e.target.value as Algoritmo)}>
                     <option value="FIFO">FIFO</option>
                     <option value="SJF">SJF</option>
                     <option value="PRIORITY">Prioridad</option>
@@ -291,7 +339,7 @@ const SchedulerApp = () => {
                                         className="w-12 h-12 object-contain mb-1"
                                     />
                                     <div className="text-xs text-center">
-                                        <strong>{r.pid}</strong><br />
+                                        <strong>{r.pid}</strong><br/>
                                         t={r.start} → {r.end}
                                     </div>
                                 </div>
@@ -323,8 +371,10 @@ const SchedulerApp = () => {
                     </table>
 
                     <div className="mt-4 text-sm text-right text-gray-700">
-                        <p>⏳ Espera promedio: {(results.reduce((sum, r) => sum + r.waitingTime, 0) / results.length).toFixed(2)}</p>
-                        <p>🔁 Retorno promedio: {(results.reduce((sum, r) => sum + r.turnaroundTime, 0) / results.length).toFixed(2)}</p>
+                        <p>⏳ Espera
+                            promedio: {(results.reduce((sum, r) => sum + (r.waitingTime ?? 0), 0) / results.length).toFixed(2)}</p>
+                        <p>🔁 Retorno
+                            promedio: {(results.reduce((sum, r) => sum + (r.turnaroundTime ?? 0), 0) / results.length).toFixed(2)}</p>
                     </div>
                 </>
             )}
